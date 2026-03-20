@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amit's AWS Journey Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Clash+Display:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080c10;--surface:#0e1318;--surface2:#141b22;--border:#1e2830;--border2:#263040;--text:#dde6ee;--muted:#5a7080;--dim:#3a5060;--orange:#ff6b2b;--orange-dim:rgba(255,107,43,0.12);--blue:#2b9fff;--green:#28c76f;--yellow:#ffbe0b;--purple:#b06cff;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,107,43,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,107,43,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 20px 80px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:20px 0 16px;border-bottom:1px solid var(--border);margin-bottom:28px;}
+.logo{font-family:'DM Mono',monospace;font-size:12px;color:var(--orange);letter-spacing:2px;display:flex;align-items:center;gap:8px;}
+.logo-dot{width:8px;height:8px;background:var(--orange);border-radius:50%;animation:pulse 2s infinite;}
+#today-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--text);}
+.hero{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start;margin-bottom:28px;}
+.hero-left h1{font-family:'Clash Display',sans-serif;font-size:clamp(28px,4vw,42px);font-weight:700;line-height:1.1;color:#fff;}
+.hero-left h1 span{color:var(--orange);}
+.hero-sub{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);margin-top:8px;letter-spacing:1px;}
+.salary-badge{background:linear-gradient(135deg,rgba(255,107,43,0.15),rgba(255,107,43,0.05));border:1px solid rgba(255,107,43,0.35);border-radius:14px;padding:16px 20px;text-align:center;white-space:nowrap;}
+.salary-now{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+.salary-arrow{font-size:22px;margin:2px 0;color:var(--orange);}
+.salary-target{font-family:'Clash Display',sans-serif;font-size:22px;font-weight:700;color:var(--orange);}
+.salary-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px;}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;}
+@media(max-width:600px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;position:relative;overflow:hidden;transition:border-color 0.2s,transform 0.2s;}
+.stat-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.sc-orange::before{background:var(--orange);}.sc-blue::before{background:var(--blue);}.sc-green::before{background:var(--green);}.sc-yellow::before{background:var(--yellow);}
+.stat-label2{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px;}
+.stat-val2{font-family:'Clash Display',sans-serif;font-size:32px;font-weight:700;line-height:1;}
+.sc-orange .stat-val2{color:var(--orange);}.sc-blue .stat-val2{color:var(--blue);}.sc-green .stat-val2{color:var(--green);}.sc-yellow .stat-val2{color:var(--yellow);}
+.stat-sub2{font-size:12px;color:var(--muted);margin-top:4px;}
+.main-grid{display:grid;grid-template-columns:1fr 320px;gap:20px;}
+@media(max-width:900px){.main-grid{grid-template-columns:1fr;}}
+.phases-col{display:flex;flex-direction:column;gap:14px;}
+.phase-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:border-color 0.2s;}
+.phase-card:hover{border-color:var(--border2);}
+.phase-card.active-phase{border-color:var(--orange);}
+.phase-card.done-phase{border-color:rgba(40,199,111,0.4);}
+.phase-head{display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;user-select:none;}
+.phase-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.pi-linux{background:rgba(255,107,43,0.12);border:1px solid rgba(255,107,43,0.3);}
+.pi-net{background:rgba(43,159,255,0.1);border:1px solid rgba(43,159,255,0.25);}
+.pi-cloud{background:rgba(40,199,111,0.1);border:1px solid rgba(40,199,111,0.25);}
+.pi-clf{background:rgba(255,190,11,0.1);border:1px solid rgba(255,190,11,0.25);}
+.pi-saa{background:rgba(176,108,255,0.1);border:1px solid rgba(176,108,255,0.25);}
+.pi-proj{background:rgba(43,159,255,0.1);border:1px solid rgba(43,159,255,0.25);}
+.pi-apply{background:rgba(40,199,111,0.1);border:1px solid rgba(40,199,111,0.25);}
+.phase-info{flex:1;}
+.phase-title2{font-family:'Clash Display',sans-serif;font-size:16px;font-weight:600;color:#fff;}
+.phase-meta2{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:1px;}
+.phase-pbar-wrap{width:80px;flex-shrink:0;}
+.phase-pbar-track{height:4px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:4px;}
+.phase-pbar-fill{height:100%;border-radius:4px;transition:width 0.8s ease;}
+.pf-orange{background:var(--orange);}.pf-blue{background:var(--blue);}.pf-green{background:var(--green);}.pf-yellow{background:var(--yellow);}.pf-purple{background:var(--purple);}
+.phase-pct{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:right;}
+.phase-body2{padding:0 18px 18px;display:none;}
+.phase-body2.open{display:block;}
+.phase-divider{height:1px;background:var(--border);margin-bottom:14px;}
+
+/* TASK */
+.task-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;padding:10px 12px;border-radius:10px;border:1px solid transparent;transition:all 0.15s;}
+.task-row:hover{background:var(--surface2);border-color:var(--border);}
+.task-row.task-done{opacity:0.5;}
+.task-left{display:flex;align-items:flex-start;gap:10px;flex:1;cursor:pointer;min-width:0;}
+.task-chk{width:20px;height:20px;flex-shrink:0;border-radius:6px;border:1.5px solid var(--dim);display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;transition:all 0.2s;margin-top:2px;pointer-events:none;}
+.task-done .task-chk{background:var(--green);border-color:var(--green);color:#000;}
+.task-text{flex:1;min-width:0;}
+.task-title2{font-size:14px;font-weight:500;color:var(--text);}
+.task-done .task-title2{text-decoration:line-through;color:var(--muted);}
+.task-desc{font-size:12px;color:var(--muted);margin-top:2px;}
+.task-time{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:3px;}
+.task-right{flex-shrink:0;margin-top:2px;}
+
+/* YT BUTTON — COPY LINK */
+.yt-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(255,0,0,0.12);border:1px solid rgba(255,0,0,0.3);color:#ff5555;font-family:'DM Mono',monospace;font-size:10px;padding:5px 10px;border-radius:7px;cursor:pointer;transition:all 0.2s;white-space:nowrap;letter-spacing:0.3px;position:relative;}
+.yt-btn:hover{background:rgba(255,0,0,0.25);color:#fff;border-color:rgba(255,80,80,0.6);}
+.yt-btn.copied{background:rgba(40,199,111,0.2);border-color:rgba(40,199,111,0.5);color:var(--green);}
+
+/* TOOLTIP */
+.tooltip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a2830;border:1px solid var(--border2);color:var(--text);font-size:10px;padding:4px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.2s;z-index:100;max-width:280px;word-break:break-all;text-align:center;}
+.yt-btn:hover .tooltip{opacity:1;}
+
+/* SIDEBAR */
+.sidebar{display:flex;flex-direction:column;gap:14px;}
+.next-card{background:linear-gradient(135deg,rgba(255,107,43,0.1),rgba(255,107,43,0.04));border:1px solid rgba(255,107,43,0.3);border-radius:16px;padding:18px;}
+.next-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--orange);margin-bottom:10px;}
+.next-title{font-family:'Clash Display',sans-serif;font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;}
+.next-desc{font-size:13px;color:var(--muted);margin-bottom:10px;}
+.next-yt-btn{display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,0,0,0.14);border:1px solid rgba(255,0,0,0.3);color:#ff6060;font-size:12px;font-family:'DM Mono',monospace;padding:9px 14px;border-radius:8px;cursor:pointer;margin-bottom:10px;transition:all 0.2s;width:100;}
+.next-yt-btn:hover{background:rgba(255,0,0,0.25);color:#fff;}
+.next-yt-btn.copied{background:rgba(40,199,111,0.15);border-color:rgba(40,199,111,0.4);color:var(--green);}
+.next-btn{width:100%;background:var(--orange);color:#fff;border:none;border-radius:10px;padding:10px;font-family:'Instrument Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.next-btn:hover{background:#ff8c5a;transform:translateY(-1px);}
+
+/* COPY HINT */
+.copy-hint{background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;}
+.copy-hint strong{color:var(--orange);}
+
+.streak-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;}
+.streak-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.streak-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);}
+.streak-num{font-family:'Clash Display',sans-serif;font-size:48px;font-weight:700;color:var(--orange);line-height:1;text-align:center;margin:8px 0;}
+.streak-sub{text-align:center;font-size:13px;color:var(--muted);margin-bottom:14px;}
+.heatmap-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;}
+.heatmap-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;}
+.hm-cell{aspect-ratio:1;border-radius:3px;background:var(--border);}
+.hm-cell.hm-done{background:var(--orange);}
+.hm-cell.hm-today{background:var(--orange-dim);border:1px solid var(--orange);}
+.overview-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;}
+.ov-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:14px;}
+.ov-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.ov-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0;}
+.ov-bar-wrap{flex:1;}
+.ov-bar-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.ov-bar-fill{height:100%;border-radius:3px;transition:width 1s ease;}
+.ov-bar-label{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px;}
+.quote-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;}
+.quote-text{font-size:14px;color:var(--text);line-height:1.6;font-style:italic;margin-bottom:8px;}
+.quote-author{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(0.85);}}
+.confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:9999;animation:fall 1.5s ease forwards;}
+@keyframes fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
+
+/* TOAST */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1a2830;border:1px solid var(--green);color:var(--green);font-family:'DM Mono',monospace;font-size:12px;padding:10px 20px;border-radius:10px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="toast" id="toast">📋 Link copy ho gaya! Browser mein paste karo.</div>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="logo"><div class="logo-dot"></div>AMIT · AWS JOURNEY</div>
+    <span id="today-date"></span>
+  </div>
+
+  <div class="hero">
+    <div class="hero-left">
+      <h1>Cloud Career<br><span>Dashboard</span></h1>
+      <div class="hero-sub">BENGALURU · 5 MONTH ROADMAP · ABHISHEK VEERAMALLA LINKS ▶</div>
+    </div>
+    <div class="salary-badge">
+      <div class="salary-now">ABHI: 3-5 LPA</div>
+      <div class="salary-arrow">↓</div>
+      <div class="salary-target">8–14 LPA</div>
+      <div class="salary-label">5 MONTHS BAAD 🎯</div>
+    </div>
+  </div>
+
+  <div class="copy-hint">
+    💡 <span><strong>YouTube button</strong> dabao → link <strong>copy</strong> ho jaata hai → browser mein <strong>paste</strong> karo (Ctrl+V / Cmd+V)</span>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card sc-orange"><div class="stat-label2">TASKS DONE</div><div class="stat-val2" id="s-done">0</div><div class="stat-sub2">of <span id="s-total">0</span> total</div></div>
+    <div class="stat-card sc-blue"><div class="stat-label2">OVERALL</div><div class="stat-val2" id="s-pct">0%</div><div class="stat-sub2">complete</div></div>
+    <div class="stat-card sc-yellow"><div class="stat-label2">STREAK</div><div class="stat-val2" id="s-streak">0</div><div class="stat-sub2">days 🔥</div></div>
+    <div class="stat-card sc-green"><div class="stat-label2">PHASE</div><div class="stat-val2" id="s-phase">1/7</div><div class="stat-sub2" id="s-phase-name">Linux</div></div>
+  </div>
+
+  <div class="main-grid">
+    <div class="phases-col" id="phases-col"></div>
+    <div class="sidebar">
+
+      <div class="next-card">
+        <div class="next-label">▸ NEXT TASK</div>
+        <div class="next-title" id="next-title">Loading...</div>
+        <div class="next-desc" id="next-desc"></div>
+        <button class="next-yt-btn" id="next-yt-btn" onclick="copyNextLink()">▶ YouTube link copy karo</button>
+        <button class="next-btn" onclick="markNextDone()">✓ Mark as Done</button>
+      </div>
+
+      <div class="streak-card">
+        <div class="streak-head"><div class="streak-label">DAILY STREAK</div><span>🔥</span></div>
+        <div class="streak-num" id="streak-big">0</div>
+        <div class="streak-sub">din lagatar padha</div>
+        <div class="heatmap-label">LAST 30 DAYS ACTIVITY</div>
+        <div class="heatmap-grid" id="heatmap"></div>
+      </div>
+
+      <div class="overview-card">
+        <div class="ov-title">PHASE OVERVIEW</div>
+        <div id="ov-rows"></div>
+      </div>
+
+      <div class="quote-card">
+        <div class="quote-text" id="quote-text"></div>
+        <div class="quote-author">— Amit ka Roadmap 🚀</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Abhishek Veeramalla ke ACTUAL playlist links
+const AV = 'https://www.youtube.com/@AbhishekVeeramalla';
+const AV_AWS = 'https://www.youtube.com/playlist?list=PLdpzxOOAlwvLNOxX0RfndiYSt1Le9azze'; // AWS Zero to Hero
+const AV_LINUX = 'https://www.youtube.com/playlist?list=PLdpzxOOAlwvIZ7u-gtpX_bozrspUbTQ1S'; // Linux
+const AV_DEVOPS = 'https://www.youtube.com/playlist?list=PLdpzxOOAlwvIKKliuKRPHSqUkJXXEcHqE'; // DevOps Zero to Hero
+
+const PHASES=[
+  {id:'linux',icon:'🐧',label:'pi-linux',bar:'pf-orange',title:'Week 1 — Linux Basics',meta:'DAYS 1–7 · EC2 ke liye ZARURI',tasks:[
+    {id:'l1',title:'Terminal + Pehla Command',desc:'ls, pwd, cd — linuxjourney.com shuru karo',time:'1 hr',yt:AV_LINUX,ytl:'▶ Abhishek: Linux Day-1'},
+    {id:'l2',title:'Files & Folders Navigation',desc:'mkdir, touch, cp, mv, rm practice karo',time:'45 min',yt:AV_LINUX,ytl:'▶ Abhishek: Linux Day-2'},
+    {id:'l3',title:'File Permissions — chmod',desc:'Read/Write/Execute, 755 vs 644 concepts',time:'1 hr',yt:AV_LINUX,ytl:'▶ Abhishek: Linux Day-3'},
+    {id:'l4',title:'Text Editing — nano / vim',desc:'cat, grep, head, tail commands',time:'45 min',yt:AV_LINUX,ytl:'▶ Abhishek: Linux Day-4'},
+    {id:'l5',title:'Processes + Package Manager',desc:'ps, top, kill, apt install commands',time:'1 hr',yt:AV_LINUX,ytl:'▶ Abhishek: Linux Day-5'},
+    {id:'l6',title:'SSH — Server Se Connect Karo',desc:'Key pair banao, free EC2 pe SSH karo!',time:'1.5 hr',yt:AV_LINUX,ytl:'▶ Abhishek: Linux SSH'},
+    {id:'l7',title:'Linux Revision + Mini Test',desc:'linuxjourney.com quiz + ek script likho',time:'1 hr',yt:AV_LINUX,ytl:'▶ Abhishek: Linux Playlist'},
+  ]},
+  {id:'net',icon:'🌐',label:'pi-net',bar:'pf-blue',title:'Week 2 — Networking Basics',meta:'DAYS 8–14 · VPC ke liye ZARURI',tasks:[
+    {id:'n1',title:'IP Address kya hota hai',desc:'IPv4, Public vs Private, CIDR notation',time:'1 hr',yt:'https://www.youtube.com/watch?v=qiQR5rTSshw',ytl:'▶ NetworkChuck: IP Basics'},
+    {id:'n2',title:'DNS — Domain Name System',desc:'nslookup try karo, Route 53 ka base',time:'45 min',yt:'https://www.youtube.com/watch?v=72snZctFFtA',ytl:'▶ DNS Explained Simply'},
+    {id:'n3',title:'HTTP vs HTTPS + Ports',desc:'80, 443, 22, 3306 — Security Groups mein',time:'1 hr',yt:'https://www.youtube.com/watch?v=iYM2zFP3Zn0',ytl:'▶ HTTP vs HTTPS Hindi'},
+    {id:'n4',title:'Firewall + Security Groups',desc:'Inbound vs Outbound, Stateful concept',time:'45 min',yt:AV_AWS,ytl:'▶ Abhishek: AWS Security Groups'},
+    {id:'n5',title:'Load Balancer + CDN Concept',desc:'AWS ALB aur CloudFront foundation',time:'45 min',yt:AV_AWS,ytl:'▶ Abhishek: AWS ALB'},
+    {id:'n6',title:'VPC Concept — AWS ka Dil',desc:'Subnets, Internet Gateway, Route Table',time:'1.5 hr',yt:AV_AWS,ytl:'▶ Abhishek: AWS VPC Day'},
+    {id:'n7',title:'Networking Revision + Quiz',desc:'Saare concepts revise karo',time:'1 hr',yt:'https://www.youtube.com/watch?v=qiQR5rTSshw',ytl:'▶ NetworkChuck Full Crash Course'},
+  ]},
+  {id:'cloud',icon:'☁️',label:'pi-cloud',bar:'pf-green',title:'Week 3 — Cloud + AWS Setup',meta:'DAYS 15–21 · CLF ke liye READY',tasks:[
+    {id:'c1',title:'Cloud Computing kya hai',desc:'IaaS, PaaS, SaaS, Public/Private/Hybrid',time:'1 hr',yt:AV_AWS,ytl:'▶ Abhishek: AWS Day-1 Cloud Intro'},
+    {id:'c2',title:'AWS Account + Console Tour',desc:'Free Tier banao, Billing alerts set karo!',time:'1.5 hr',yt:AV_AWS,ytl:'▶ Abhishek: AWS Account Setup'},
+    {id:'c3',title:'EC2 + S3 + IAM Hands-On',desc:'EC2 launch, S3 bucket, IAM user banao',time:'2 hr',yt:AV_AWS,ytl:'▶ Abhishek: AWS EC2 S3 IAM'},
+    {id:'c4',title:'AWS Pricing + Shared Responsibility',desc:'Pay-as-you-go, CLF mein 20% marks',time:'1 hr',yt:AV_AWS,ytl:'▶ Abhishek: AWS Pricing'},
+    {id:'c5',title:'Well-Architected Framework',desc:'6 pillars — Security, Reliability...',time:'45 min',yt:AV_AWS,ytl:'▶ Abhishek: AWS Architecture'},
+    {id:'c6',title:'Full Revision — Week 1,2,3',desc:'Saare concepts ek baar aur practice karo',time:'2 hr',yt:AV_AWS,ytl:'▶ Abhishek: AWS Zero to Hero Playlist'},
+    {id:'c7',title:'🎉 Pre-Prep Complete!',desc:'AWS CLF course abhi start karo',time:'Party!',yt:AV_AWS,ytl:'▶ Abhishek: AWS Zero to Hero Full'},
+  ]},
+  {id:'clf',icon:'🏆',label:'pi-clf',bar:'pf-yellow',title:'Month 1 — AWS CLF-C02',meta:'WEEKS 1–4 · FOUNDATION EXAM',tasks:[
+    {id:'cf1',title:'Cloud Basics + AWS Overview',desc:'Global Infrastructure, Regions, AZs',time:'Week 1',yt:AV_AWS,ytl:'▶ Abhishek: AWS Basics'},
+    {id:'cf2',title:'Compute + Storage Services',desc:'EC2, S3, Lambda, EBS, Glacier hands-on',time:'Week 2',yt:AV_AWS,ytl:'▶ Abhishek: EC2 + S3'},
+    {id:'cf3',title:'Networking + Security + DB',desc:'VPC, IAM, RDS, DynamoDB, CloudFront',time:'Week 3',yt:AV_AWS,ytl:'▶ Abhishek: VPC + IAM'},
+    {id:'cf4',title:'Mock Tests + CLF EXAM DAY!',desc:'3 full mocks, 750+ score target',time:'Week 4',yt:'https://www.youtube.com/watch?v=NhDYbskXRgc',ytl:'▶ FreeCodeCamp: CLF Full Course'},
+  ]},
+  {id:'saa',icon:'🥇',label:'pi-saa',bar:'pf-purple',title:'Month 2 — AWS SAA-C03',meta:'WEEKS 5–8 · ARCHITECTURE EXAM',tasks:[
+    {id:'sa1',title:'VPC Deep Dive + High Availability',desc:'Custom VPC, ALB, Auto Scaling, Multi-AZ',time:'Week 5',yt:AV_AWS,ytl:'▶ Abhishek: VPC Deep Dive'},
+    {id:'sa2',title:'Databases + Storage Architecture',desc:'RDS Multi-AZ, Aurora, S3 advanced',time:'Week 6',yt:AV_AWS,ytl:'▶ Abhishek: RDS + Aurora'},
+    {id:'sa3',title:'Serverless + Security + Monitor',desc:'Lambda, API Gateway, CloudWatch, KMS',time:'Week 7',yt:AV_AWS,ytl:'▶ Abhishek: Lambda + Serverless'},
+    {id:'sa4',title:'Mock Tests + SAA EXAM DAY!',desc:'5 full mocks, Stephane Maarek notes',time:'Week 8',yt:'https://www.udemy.com/course/aws-certified-solutions-architect-associate-saa-c03/',ytl:'▶ Stephane Maarek SAA Course'},
+  ]},
+  {id:'proj',icon:'💻',label:'pi-proj',bar:'pf-blue',title:'Month 3 — Projects + Portfolio',meta:'WEEKS 9–12 · BUILD REAL STUFF',tasks:[
+    {id:'pr1',title:'Project 1 — Static Website',desc:'S3 + CloudFront + Route 53 + GitHub',time:'Week 9',yt:AV_AWS,ytl:'▶ Abhishek: AWS S3 Project'},
+    {id:'pr2',title:'Project 2 — 3-Tier Web App',desc:'EC2 + ALB + Auto Scaling + RDS + VPC',time:'Week 10',yt:AV_DEVOPS,ytl:'▶ Abhishek: Real Time Project'},
+    {id:'pr3',title:'Project 3 — Serverless App',desc:'Lambda + API Gateway + DynamoDB CRUD',time:'Week 11',yt:AV_AWS,ytl:'▶ Abhishek: Serverless Project'},
+    {id:'pr4',title:'Resume + LinkedIn + GitHub',desc:'Certifications + projects add karo',time:'Week 12',yt:AV,ytl:'▶ Abhishek: Channel Home'},
+  ]},
+  {id:'apply',icon:'🚀',label:'pi-apply',bar:'pf-green',title:'Month 4 — Apply + Get Hired',meta:'WEEKS 13–16 · 8-14 LPA TARGET',tasks:[
+    {id:'ap1',title:'Interview Prep — AWS Theory',desc:'Top 50 questions, EC2 vs Lambda',time:'Week 13',yt:AV_AWS,ytl:'▶ Abhishek: AWS Interview Q&A'},
+    {id:'ap2',title:'Apply — 10 Jobs Per Day',desc:'LinkedIn, Naukri, Wipro/HCL Cloud divisions',time:'Week 14',yt:'https://www.linkedin.com/jobs/cloud-engineer-jobs-bangalore',ytl:'▶ LinkedIn Cloud Jobs Bengaluru'},
+    {id:'ap3',title:'Mock Interviews + Networking',desc:'Pramp.com, AWS User Group Bengaluru',time:'Week 15',yt:AV_AWS,ytl:'▶ Abhishek: Mock Interview AWS'},
+    {id:'ap4',title:'🎉 Offer Accept Karo!',desc:'20-30% zyada maango, negotiate karo!',time:'Week 16',yt:AV,ytl:'▶ Abhishek: Channel Subscribe Karo!'},
+  ]},
+];
+
+const QUOTES=[
+  '"Consistency beats intensity. Roz thoda thoda karo — result zaroor aayega."',
+  '"Linux seekha? Networking seekha? Ab AWS tujhe rokne wala koi nahi."',
+  '"Har completed task ek step hai 8 LPA ki taraf. Ruk mat."',
+  '"Discomfort hi growth hai. Confused feel ho raha hai? Sahi raste pe ho."',
+  '"AWS certified hona ek certificate nahi — ek new life hai."',
+];
+
+function loadState(){try{return JSON.parse(localStorage.getItem('amit_aws_v4')||'{}');}catch(e){return{};}}
+function saveState(s){localStorage.setItem('amit_aws_v4',JSON.stringify(s));}
+let state=loadState();
+if(!state.done)state.done={};
+if(!state.streak)state.streak=0;
+if(!state.lastDate)state.lastDate=null;
+if(!state.activity)state.activity=[];
+
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function updateStreak(){
+  const today=todayStr();
+  if(state.lastDate===today)return;
+  const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  if(state.lastDate===yesterday)state.streak++;
+  else if(Object.keys(state.done).length>0)state.streak=Math.max(state.streak,1);
+  state.lastDate=today;saveState(state);
+}
+function allTasks(){return PHASES.flatMap(p=>p.tasks.map(t=>({...t,phase:p.id})));}
+function doneCount(){return Object.keys(state.done).length;}
+function totalCount(){return allTasks().length;}
+function phaseDone(ph){return ph.tasks.filter(t=>state.done[t.id]).length;}
+
+// COPY LINK FUNCTION
+function copyLink(url,btnEl){
+  navigator.clipboard.writeText(url).then(()=>{
+    if(btnEl){
+      const orig=btnEl.textContent;
+      btnEl.textContent='✓ Link Copy Ho Gaya!';
+      btnEl.classList.add('copied');
+      setTimeout(()=>{btnEl.textContent=orig;btnEl.classList.remove('copied');},2000);
+    }
+    showToast();
+  }).catch(()=>{
+    // fallback
+    const ta=document.createElement('textarea');
+    ta.value=url;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast();
+  });
+}
+function showToast(){
+  const t=document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function copyNextLink(){
+  const next=getNextTask();
+  if(next){
+    const btn=document.getElementById('next-yt-btn');
+    copyLink(next.yt,btn);
+    btn.textContent='✓ Copy Ho Gaya! Browser mein paste karo';
+    setTimeout(()=>{btn.textContent='▶ YouTube link copy karo';btn.classList.remove('copied');},2500);
+  }
+}
+
+function renderPhases(){
+  const col=document.getElementById('phases-col');col.innerHTML='';
+  PHASES.forEach((ph,pi)=>{
+    const done=phaseDone(ph),total=ph.tasks.length,pct=Math.round(done/total*100);
+    const isActive=done>0&&done<total,isDone=done===total;
+    const card=document.createElement('div');
+    card.className='phase-card'+(isActive?' active-phase':'')+(isDone?' done-phase':'');
+    card.innerHTML=`
+      <div class="phase-head" onclick="togglePhase('pb${pi}')">
+        <div class="phase-icon ${ph.label}">${ph.icon}</div>
+        <div class="phase-info">
+          <div class="phase-title2">${ph.title}</div>
+          <div class="phase-meta2">${ph.meta}</div>
+        </div>
+        <div class="phase-pbar-wrap">
+          <div class="phase-pbar-track"><div class="phase-pbar-fill ${ph.bar}" style="width:${pct}%"></div></div>
+          <div class="phase-pct">${done}/${total}</div>
+        </div>
+      </div>
+      <div class="phase-body2${pi===0?' open':''}" id="pb${pi}">
+        <div class="phase-divider"></div>
+        ${ph.tasks.map((t,ti)=>`
+          <div class="task-row${state.done[t.id]?' task-done':''}">
+            <div class="task-left" onclick="toggleTask('${t.id}')">
+              <div class="task-chk">✓</div>
+              <div class="task-text">
+                <div class="task-title2">${t.title}</div>
+                <div class="task-desc">${t.desc}</div>
+                <div class="task-time">⏱ ${t.time}</div>
+              </div>
+            </div>
+            <div class="task-right">
+              <button class="yt-btn" id="ytb-${t.id}" onclick="event.stopPropagation();copyLink('${t.yt}',this)">
+                ${t.ytl}
+                <span class="tooltip">${t.yt}</span>
+              </button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    col.appendChild(card);
+  });
+}
+
+function togglePhase(id){document.getElementById(id).classList.toggle('open');}
+function toggleTask(id){
+  if(state.done[id])delete state.done[id];
+  else{
+    state.done[id]=true;
+    const today=todayStr();
+    if(!state.activity.includes(today))state.activity.push(today);
+    updateStreak();confetti();
+  }
+  saveState(state);render();
+}
+function markNextDone(){const n=getNextTask();if(n)toggleTask(n.id);}
+function getNextTask(){return allTasks().find(t=>!state.done[t.id])||null;}
+
+function renderStats(){
+  const done=doneCount(),total=totalCount(),pct=total?Math.round(done/total*100):0;
+  document.getElementById('s-done').textContent=done;
+  document.getElementById('s-total').textContent=total;
+  document.getElementById('s-pct').textContent=pct+'%';
+  document.getElementById('s-streak').textContent=state.streak;
+  document.getElementById('streak-big').textContent=state.streak;
+  let pi=0;
+  for(let i=0;i<PHASES.length;i++){if(phaseDone(PHASES[i])<PHASES[i].tasks.length){pi=i;break;} if(i===PHASES.length-1)pi=i;}
+  document.getElementById('s-phase').textContent=(pi+1)+'/'+PHASES.length;
+  document.getElementById('s-phase-name').textContent=PHASES[pi].title.split('—')[1]?.trim()||PHASES[pi].title;
+}
+function renderNextTask(){
+  const next=getNextTask();
+  if(next){
+    document.getElementById('next-title').textContent=next.title;
+    document.getElementById('next-desc').textContent=next.desc;
+    document.getElementById('next-yt-btn').style.display='flex';
+  }else{
+    document.getElementById('next-title').textContent='🎉 Sab Done!';
+    document.getElementById('next-desc').textContent='Bhai tu AWS champion ban gaya! 🏆';
+    document.getElementById('next-yt-btn').style.display='none';
+  }
+}
+function renderHeatmap(){
+  const hm=document.getElementById('heatmap');hm.innerHTML='';
+  const today=new Date();
+  for(let i=29;i>=0;i--){
+    const d=new Date(today-i*86400000).toISOString().slice(0,10);
+    const cell=document.createElement('div');
+    cell.className='hm-cell'+(state.activity.includes(d)?' hm-done':i===0?' hm-today':'');
+    hm.appendChild(cell);
+  }
+}
+function renderOverview(){
+  const c=document.getElementById('ov-rows');c.innerHTML='';
+  const colors=['var(--orange)','var(--blue)','var(--green)','var(--yellow)','var(--purple)','var(--blue)','var(--green)'];
+  PHASES.forEach((ph,i)=>{
+    const done=phaseDone(ph),total=ph.tasks.length,pct=Math.round(done/total*100);
+    c.innerHTML+=`<div class="ov-row"><div class="ov-icon">${ph.icon}</div><div class="ov-bar-wrap"><div class="ov-bar-track"><div class="ov-bar-fill" style="width:${pct}%;background:${colors[i]}"></div></div><div class="ov-bar-label"><span>${ph.title.split('—')[0].trim()}</span><span>${done}/${total}</span></div></div></div>`;
+  });
+}
+function confetti(){
+  const colors=['#ff6b2b','#2b9fff','#28c76f','#ffbe0b','#ff4d6d'];
+  for(let i=0;i<16;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.cssText=`left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*5)]};animation-delay:${Math.random()*0.4}s;width:${6+Math.random()*6}px;height:${6+Math.random()*6}px`;
+    document.body.appendChild(el);setTimeout(()=>el.remove(),2000);
+  }
+}
+function render(){renderPhases();renderStats();renderNextTask();renderHeatmap();renderOverview();}
+document.getElementById('today-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+document.getElementById('quote-text').textContent=QUOTES[Math.floor(Math.random()*QUOTES.length)];
+render();
+</script>
+</body>
+</html>
